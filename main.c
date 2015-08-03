@@ -1,10 +1,12 @@
 #include "ch.h"
 #include "hal.h"
+#include "usb_related.h"
 #include "dw1000_hal.h"
 #include "dw1000_lld.h"
 #include "dw1000_reg.h"
 #include "dw1000.h"
 #include "exti.h"
+#include "chprintf.h"
 //#include "system_init.h"
 //#include "bootloader.h"
 
@@ -14,6 +16,7 @@
 volatile assert_errors kfly_assert_errors;
 
 extern dw1000_hal_t default_dw1000_hal;
+extern SerialUSBDriver SDU1;
 const EXTConfig extcfg = {
   {
     {EXT_CH_MODE_DISABLED, NULL},
@@ -51,6 +54,7 @@ int main(void)
     halInit();
     chSysInit();
     // enable interrupt
+    usbstartup();
     extStart(&EXTD1, &extcfg);
 
     /*
@@ -129,7 +133,6 @@ int main(void)
 
         chThdSleepMilliseconds(500);
         //dw.send(&dw, &message,0);
-
         //clear all the interrupts!!
 
     }
