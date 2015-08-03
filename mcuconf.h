@@ -53,7 +53,7 @@
 #define STM32_PPRE2                         STM32_PPRE2_DIV2
 #define STM32_PREDIV2_VALUE                 3
 #define STM32_ADCPRE                        STM32_ADCPRE_DIV4
-#define STM32_USB_CLOCK_REQUIRED            FALSE
+#define STM32_USB_CLOCK_REQUIRED            TRUE
 #define STM32_USBPRE                        STM32_USBPRE_DIV1P5
 #define STM32_MCOSEL                        STM32_MCOSEL_NOCLOCK
 #define STM32_RTCSEL                        STM32_RTCSEL_HSEDIV
@@ -207,7 +207,7 @@
 /*
  * USB driver system settings.
  */
-#define STM32_USB_USE_OTG1                  FALSE
+#define STM32_USB_USE_OTG1                  TRUE
 #define STM32_USB_LOW_POWER_ON_SUSPEND      FALSE
 #define STM32_USB_USB1_HP_IRQ_PRIORITY      13
 #define STM32_USB_USB1_LP_IRQ_PRIORITY      14
