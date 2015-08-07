@@ -126,11 +126,11 @@ int main(void)
     message.ranging = false;
     message.autoack = false;
 
-#define SENDER
+//#define SENDER
 #define RANGER
 
 #ifndef SENDER
-    dw1000_receive(&dw,0);
+    dw1000_receive(&dw);
 #endif
     while(1)
     {
@@ -141,7 +141,7 @@ int main(void)
         chThdSleepMilliseconds(500);
 #ifdef SENDER
 #ifndef RANGER
-        dw1000_send(&dw, &message,0);
+        dw1000_send(&dw, &message);
         payload[49]++;
 #else
         uint8_t dst[2] = {0xBE,0xEF};
