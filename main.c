@@ -7,6 +7,8 @@
 #include "dw1000.h"
 #include "exti.h"
 #include "chprintf.h"
+#include "dw1000_ranging.h"
+#include "debug_print.h"
 //#include "system_init.h"
 //#include "bootloader.h"
 
@@ -17,6 +19,8 @@ volatile assert_errors kfly_assert_errors;
 
 extern dw1000_hal_t default_dw1000_hal;
 extern SerialUSBDriver SDU1;
+
+extern BaseSequentialStream debug_print;
 const EXTConfig extcfg = {
   {
     {EXT_CH_MODE_DISABLED, NULL},
@@ -55,6 +59,9 @@ int main(void)
     chSysInit();
     // enable interrupt
     usbstartup();
+
+    //enable debug print thread
+    vInitDebugPrint((BaseSequentialStream *) &SDU1);
     extStart(&EXTD1, &extcfg);
 
     /*
@@ -84,56 +91,66 @@ int main(void)
     dw1000_generate_recommended_conf(
             &default_dw1000_hal,
             DW1000_DATARATE_6800,
-            DW1000_CHANNEL_7,
+            DW1000_CHANNEL_2,
             1,
             &config);
 
     dw.config = &config;
 
-    dw.init(&dw);
-
-    //default_dw1000_hal.init(&default_dw1000_hal);
-    //dw1000_softreset(&default_dw1000_hal);
-    //dw1000_set_interrupts(&default_dw1000_hal, 0xFFFFFFFF );
+    dw1000_init(&dw);
 
     volatile uint32_t p = 0;
 
     //dw.receive(&dw,0);
     // clear interrupts
-    uint32_t zero =0xFFFFFFFE;
+    uint32_t zero = \
+        DW1000_EVENT_TXFRS | \
+        DW1000_EVENT_RXDFR \
+        ;
+   dw1000_set_interrupts(&default_dw1000_hal,zero);
     //dw1000_write_register( &default_dw1000_hal, DW1000_REG_SYS_STATUS, 4, (uint8_t*)&zero);
-    uint8_t payload[10] =  {0xDE,
+    uint8_t payload[50] =  {0xDE,
                             0xCA,
                             0xDE,
                             0xAD,
                             0xBE,
                             0xEF,
                             0xC0,
-                            0xCA,
+                            0xCE,
                             0x09,
-                            0x0a
+                            0x00
     };
     dw1000_msg_t message;
-    message.length = 10;
-    message.payload = payload;
-    dw.receive(&dw,0);
+    message.length = 50;
+    message.payload = &payload;
+    message.ranging = false;
+    message.autoack = false;
+
+#define SENDER
+#define RANGER
+
+#ifndef SENDER
+    dw1000_receive(&dw,0);
+#endif
     while(1)
     {
 
         palTogglePad(GPIOC, GPIOC_PIN8);
-        //dw1000_set_preamble_length(&default_dw1000_hal, DW1000_PREAMBLE_LENGTH_512);
-        //works
-        //dw1000_set_preamble_code(&default_dw1000_hal,DW1000_PREAMBLE_CODE_1); // works
-        //dw1000_set_prf(&default_dw1000_hal,DW1000_PRF_64_MHZ); // works
-        //dw1000_set_channel(&default_dw1000_hal,DW1000_CHANNEL_3); //works
-        //dw1000_read_register(&default_dw1000_hal, DW1000_REG_SYS_STATUS,4,(uint8_t*)&p);
-
-        //p = dw1000_get_dev_id(&default_dw1000_hal);
 
 
         chThdSleepMilliseconds(500);
-        //dw.send(&dw, &message,0);
+#ifdef SENDER
+#ifndef RANGER
+        dw1000_send(&dw, &message,0);
+        payload[49]++;
+#else
+        uint8_t dst[2] = {0xBE,0xEF};
+        request_ranging(&dw, dst);
+#endif
+#endif
         //clear all the interrupts!!
+        //
+        chprintf(&debug_print, "Debug printouts!!!\n\r");
 
     }
 
