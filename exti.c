@@ -4,7 +4,7 @@
 
 extern dw1000_driver_t dw;
 
-static THD_WORKING_AREA(mythreadwa,512);
+static THD_WORKING_AREA(mythreadwa,1024);
 static thread_reference_t *trp = NULL;
 
 

@@ -1,3 +1,5 @@
+//#define SENDER
+
 #include "ch.h"
 #include "hal.h"
 #include "usb_related.h"
@@ -64,21 +66,11 @@ int main(void)
     vInitDebugPrint((BaseSequentialStream *) &SDU1);
     extStart(&EXTD1, &extcfg);
 
-    /*
-     *
-     * Initialize all drivers and modules.
-     *
-     */
-    //vSystemInit();
-
-    /*
-     *
-     * Main task loop.
-     *
-     */
-    //while(bSystemShutdownRequested() == false)
     uint8_t rxbuf[4];
     dw1000_conf_t config;
+    config.shortaddr[0] = 0xFA;
+    config.shortaddr[1] = 0xCC;
+
 
     dw.init = dw1000_init;
     dw.send = dw1000_send;
@@ -90,7 +82,7 @@ int main(void)
 
     dw1000_generate_recommended_conf(
             &default_dw1000_hal,
-            DW1000_DATARATE_6800,
+            DW1000_DATARATE_850,
             DW1000_CHANNEL_2,
             1,
             &config);
@@ -105,8 +97,10 @@ int main(void)
     // clear interrupts
     uint32_t zero = \
         DW1000_EVENT_TXFRS | \
+        DW1000_EVENT_RXFCG | \
         DW1000_EVENT_RXDFR \
         ;
+
    dw1000_set_interrupts(&default_dw1000_hal,zero);
     //dw1000_write_register( &default_dw1000_hal, DW1000_REG_SYS_STATUS, 4, (uint8_t*)&zero);
     uint8_t payload[50] =  {0xDE,
@@ -126,8 +120,6 @@ int main(void)
     message.ranging = false;
     message.autoack = false;
 
-//#define SENDER
-#define RANGER
 
 #ifndef SENDER
     dw1000_receive(&dw);
@@ -138,19 +130,15 @@ int main(void)
         palTogglePad(GPIOC, GPIOC_PIN8);
 
 
-        chThdSleepMilliseconds(500);
+        chThdSleepMilliseconds(200);
 #ifdef SENDER
-#ifndef RANGER
-        dw1000_send(&dw, &message);
-        payload[49]++;
-#else
+        //chThdSleepMilliseconds(800);
         uint8_t dst[2] = {0xBE,0xEF};
         request_ranging(&dw, dst);
 #endif
-#endif
         //clear all the interrupts!!
         //
-        chprintf(&debug_print, "Debug printouts!!!\n\r");
+        //chprintf(&debug_print, "Debug printouts!!!\n\r");
 
     }
 
