@@ -1,4 +1,4 @@
-//#define SENDER
+#define SENDER
 
 #include "ch.h"
 #include "hal.h"
@@ -46,7 +46,17 @@ const EXTConfig extcfg = {
 
 dw1000_driver_t dw;
 
-volatile uint8_t hej =0;
+void check_dip_switches(){
+
+    if( PAL_HIGH == palReadPad(GPIOC, GPIOC_PIN5)){
+        palSetPad(GPIOC, GPIOC_PIN8);
+    }
+    else{
+        palClearPad(GPIOC, GPIOC_PIN8);
+    }
+
+
+}
 
 int main(void)
 {
@@ -68,13 +78,15 @@ int main(void)
 
     uint8_t rxbuf[4];
     dw1000_conf_t config;
-    config.shortaddr[0] = 0xFA;
-    config.shortaddr[1] = 0xCC;
+#ifdef SENDER
+    config.shortaddr[0] = 0x5E;
+    config.shortaddr[1] = 0x40;
+#else
+    config.shortaddr[0] = 0x8E;
+    config.shortaddr[1] = 0xC1;
+#endif
 
 
-    dw.init = dw1000_init;
-    dw.send = dw1000_send;
-    dw.receive = dw1000_receive;
     dw.state = UNINITIALIZED;
 
     // start thread to be activated by interrupt.
@@ -96,49 +108,39 @@ int main(void)
     //dw.receive(&dw,0);
     // clear interrupts
     uint32_t zero = \
-        DW1000_EVENT_TXFRS | \
-        DW1000_EVENT_RXFCG | \
-        DW1000_EVENT_RXDFR \
-        ;
+                    DW1000_EVENT_TXFRS | \
+                    DW1000_EVENT_RXFCG | \
+                    DW1000_EVENT_RXDFR \
+                    ;
 
-   dw1000_set_interrupts(&default_dw1000_hal,zero);
-    //dw1000_write_register( &default_dw1000_hal, DW1000_REG_SYS_STATUS, 4, (uint8_t*)&zero);
-    uint8_t payload[50] =  {0xDE,
-                            0xCA,
-                            0xDE,
-                            0xAD,
-                            0xBE,
-                            0xEF,
-                            0xC0,
-                            0xCE,
-                            0x09,
-                            0x00
-    };
-    dw1000_msg_t message;
-    message.length = 50;
-    message.payload = &payload;
-    message.ranging = false;
-    message.autoack = false;
+    dw1000_set_interrupts(&default_dw1000_hal,zero);
+
+    uint8_t xtal_val = 0x6F; //0x60;
+    dw1000_write_8bit(&default_dw1000_hal, DW1000_SREG_FS_XTALT, xtal_val);
 
 
-#ifndef SENDER
     dw1000_receive(&dw);
-#endif
+    bool sender = false;
+
+    if(palReadPad(GPIOC, GPIOC_PIN5) == PAL_HIGH){
+        sender = true;
+        set_ranging_callback(*calibration_cb);
+    }
+
+
     while(1)
     {
 
-        palTogglePad(GPIOC, GPIOC_PIN8);
+        //palTogglePad(GPIOC, GPIOC_PIN8);
 
 
         chThdSleepMilliseconds(200);
-#ifdef SENDER
         //chThdSleepMilliseconds(800);
         uint8_t dst[2] = {0xBE,0xEF};
-        request_ranging(&dw, dst);
-#endif
-        //clear all the interrupts!!
-        //
-        //chprintf(&debug_print, "Debug printouts!!!\n\r");
+        if(sender){
+            request_ranging(&dw, dst);
+        }
+
 
     }
 
@@ -149,12 +151,12 @@ int main(void)
      */
     //vSystemDeinit();
 
-   /*
-    *
-    * All threads, drivers, interrupts and SysTick are now disabled.
-    * The main function is now just a "normal" function again.
-    *
-    */
+    /*
+     *
+     * All threads, drivers, interrupts and SysTick are now disabled.
+     * The main function is now just a "normal" function again.
+     *
+     */
 
     /*
      *

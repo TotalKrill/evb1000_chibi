@@ -114,9 +114,6 @@ CSRC = $(STARTUPSRC) \
        $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
        main.c \
        exti.c \
-	   usb_related.c \
-	   dbgprint/circularbuffer.c \
-	   dbgprint/debug_print.c \
        $(MODULES_SRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

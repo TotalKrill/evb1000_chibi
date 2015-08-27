@@ -1,6 +1,6 @@
-#include "exti.h"
 #include "ch.h"
 #include "dw1000.h"
+#include "exti.h"
 
 extern dw1000_driver_t dw;
 
@@ -26,7 +26,7 @@ THD_FUNCTION(myThread, arg) {
 void start_thd(void){
 
     (void)chThdCreateStatic(mythreadwa, sizeof(mythreadwa),
-                          NORMALPRIO, myThread, NULL);
+                          ABSPRIO, myThread, NULL);
 }
 
 
