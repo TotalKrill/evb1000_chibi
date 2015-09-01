@@ -88,7 +88,7 @@ int main(void)
 
     dw1000_generate_recommended_conf(
             &default_dw1000_hal,
-            DW1000_DATARATE_6800,
+            DW1000_DATARATE_850,
             DW1000_CHANNEL_2,
             1,
             &config);
@@ -97,7 +97,6 @@ int main(void)
 
     dw1000_init(&dw);
 
-    volatile uint32_t p = 0;
 
     //dw.receive(&dw,0);
     // clear interrupts
@@ -141,9 +140,6 @@ int main(void)
         uint8_t dst[2] = {0xBE,0xEF};
         if(sender){
             request_ranging(&dw, dst);
-        }
-        else{
-            dw1000_receive(&dw);
         }
 
         if (per_loop == 10){
