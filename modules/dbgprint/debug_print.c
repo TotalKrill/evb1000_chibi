@@ -34,7 +34,7 @@ BaseSequentialStream debug_print = {
 /* Module local variables and types.                                         */
 /*===========================================================================*/
 
-static THD_WORKING_AREA(waDebugPrint, 128);
+static THD_WORKING_AREA(waDebugPrint, 512);
 static BaseSequentialStream *print_out_ptr;
 static circular_buffer_t *cbuff_ptr;
 

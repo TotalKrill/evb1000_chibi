@@ -25,8 +25,8 @@ THD_FUNCTION(myThread, arg) {
 
 void start_thd(void){
 
-    (void)chThdCreateStatic(mythreadwa, sizeof(mythreadwa),
-                          ABSPRIO, myThread, NULL);
+    chThdCreateStatic(mythreadwa, sizeof(mythreadwa),
+                          HIGHPRIO, myThread, NULL);
 }
 
 

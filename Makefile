@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -Og -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Og -ggdb -fomit-frame-pointer -falign-functions=16 -Wno-unused-variable
 endif
 
 # C specific options here (added to USE_OPT).
@@ -146,7 +146,7 @@ ASMSRC = $(STARTUPASM) $(PORTASM) $(OSALASM)
 INCDIR = $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
          $(HALINC) $(PLATFORMINC) $(BOARDINC) $(SYSTEMINC) \
          $(ADRIVERSINC) $(CHIBIOS)/os/hal/lib/streams $(CHIBIOS)/os/various \
-         $(MODULES_INC) . dbgprint
+         $(MODULES_INC) .
 
 #
 # Project, sources and paths
@@ -273,6 +273,9 @@ GDB_FLAGS = -ex "target remote | $(OPENOCD) -c \"gdb_port pipe; log_output openo
 
 gdb: build/$(PROJECT).elf
 	$(GDB) build/$(PROJECT).elf $(GDB_FLAGS)
+
+includes:
+	@echo $(DBG_PRINT_INC)
 
 #
 # End of GDB section

@@ -1,4 +1,3 @@
-#define SENDER
 
 #include "ch.h"
 #include "hal.h"
@@ -8,11 +7,16 @@
 #include "dw1000_reg.h"
 #include "dw1000.h"
 #include "exti.h"
-#include "chprintf.h"
 #include "dw1000_ranging.h"
+#include "timer.h"
+
+
+#include "chprintf.h"
 #include "debug_print.h"
-//#include "system_init.h"
-//#include "bootloader.h"
+extern BaseSequentialStream debug_print;
+extern SerialUSBDriver SDU1;
+
+#define printf(...) chprintf(&debug_print, __VA_ARGS__)
 
 /**
  * @brief Placeholder for error messages.
@@ -20,9 +24,7 @@
 volatile assert_errors kfly_assert_errors;
 
 extern dw1000_hal_t default_dw1000_hal;
-extern SerialUSBDriver SDU1;
 
-extern BaseSequentialStream debug_print;
 const EXTConfig extcfg = {
   {
     {EXT_CH_MODE_DISABLED, NULL},
@@ -46,18 +48,6 @@ const EXTConfig extcfg = {
 
 dw1000_driver_t dw;
 
-void check_dip_switches(){
-
-    if( PAL_HIGH == palReadPad(GPIOC, GPIOC_PIN5)){
-        palSetPad(GPIOC, GPIOC_PIN8);
-    }
-    else{
-        palClearPad(GPIOC, GPIOC_PIN8);
-    }
-
-
-}
-
 int main(void)
 {
     /*
@@ -74,6 +64,12 @@ int main(void)
 
     //enable debug print thread
     vInitDebugPrint((BaseSequentialStream *) &SDU1);
+    palClearPad(GPIOA, GPIOA_PIN0);
+    chThdSleepMilliseconds(25000);
+    palSetPad(GPIOA, GPIOA_PIN0);
+    // start thread to be activated by interrupt.
+    start_thd();
+    //enable interrupt
     extStart(&EXTD1, &extcfg);
 
     uint8_t rxbuf[4];
@@ -89,12 +85,10 @@ int main(void)
 
     dw.state = UNINITIALIZED;
 
-    // start thread to be activated by interrupt.
-    start_thd();
 
     dw1000_generate_recommended_conf(
             &default_dw1000_hal,
-            DW1000_DATARATE_850,
+            DW1000_DATARATE_6800,
             DW1000_CHANNEL_2,
             1,
             &config);
@@ -110,62 +104,67 @@ int main(void)
     uint32_t zero = \
                     DW1000_EVENT_TXFRS | \
                     DW1000_EVENT_RXFCG | \
-                    DW1000_EVENT_RXDFR \
+                    DW1000_EVENT_RXFCE | \
+                    DW1000_EVENT_AFFREJ | \
+                    DW1000_EVENT_RXPHE | \
+                    DW1000_EVENT_LDEERR | \
+                    DW1000_EVENT_HPDWARN | \
+                    DW1000_EVENT_RXDFR | \
+                    DW1000_EVENT_TXBERR \
                     ;
 
     dw1000_set_interrupts(&default_dw1000_hal,zero);
-
-    uint8_t xtal_val = 0x6F; //0x60;
-    dw1000_write_8bit(&default_dw1000_hal, DW1000_SREG_FS_XTALT, xtal_val);
-
 
     dw1000_receive(&dw);
     bool sender = false;
 
     if(palReadPad(GPIOC, GPIOC_PIN5) == PAL_HIGH){
         sender = true;
-        set_ranging_callback(*calibration_cb);
+        //set_ranging_callback(calibration_cb);
+        palSetPad(GPIOC, GPIOC_PIN8);
+    }
+    else{
+        palClearPad(GPIOC, GPIOC_PIN8);
     }
 
+    init_timex();
+
+    int per_loop =0;
+    uint16_t counter[12];
 
     while(1)
     {
 
         //palTogglePad(GPIOC, GPIOC_PIN8);
 
-
-        chThdSleepMilliseconds(200);
-        //chThdSleepMilliseconds(800);
+        chThdSleepMilliseconds(1000);
         uint8_t dst[2] = {0xBE,0xEF};
         if(sender){
             request_ranging(&dw, dst);
         }
+        else{
+            dw1000_receive(&dw);
+        }
+
+        if (per_loop == 10){
+            per_loop = 0;
+            dw1000_get_event_counters(&default_dw1000_hal, counter);
+            printf("PHR_ERRORS: %u \n\r", counter[PHR_ERRORS]);
+            printf("RSD_ERRORS: %u \n\r", counter[RSD_ERRORS]);
+            printf("FCS_GOOD: %u \n\r", counter[FCS_GOOD]);
+            printf("FCS_ERRORS: %u \n\r", counter[FCS_ERRORS]);
+            printf("FILTER_REJECTIONS: %u \n\r", counter[FILTER_REJECTIONS]);
+            printf("RX_OVERRUNS: %u \n\r", counter[RX_OVERRUNS]);
+            printf("SFD_TIMEOUTS: %u \n\r", counter[SFD_TIMEOUTS]);
+            printf("PREAMBLE_TIMEOUTS: %u \n\r", counter[PREAMBLE_TIMEOUTS]);
+            printf("RX_TIMEOUTS: %u \n\r", counter[RX_TIMEOUTS]);
+            printf("TX_SENT: %u \n\r", counter[TX_SENT]);
+            printf("HALF_PERIOD_WARNINGS: %u \n\r", counter[HALF_PERIOD_WARNINGS]);
+            printf("TX_PWRUP_WARNINGS: %u \n\r", counter[TX_PWRUP_WARNINGS]);
+        }
+        per_loop++;
 
 
     }
 
-    /*
-     *
-     * Deinitialize all drivers and modules.
-     *
-     */
-    //vSystemDeinit();
-
-    /*
-     *
-     * All threads, drivers, interrupts and SysTick are now disabled.
-     * The main function is now just a "normal" function again.
-     *
-     */
-
-    /*
-     *
-     * Start the DFU bootloader.
-     * This can be replaced if a custom bootloader is available.
-     *
-     */
-    //vBootloaderResetAndStartDFU();
-
-    /* In case of error get stuck here */
-    while (1);
 }

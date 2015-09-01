@@ -6,7 +6,7 @@
 /*===========================================================================*/
 
 #ifndef DEBUG_BUFFER_SIZE
-#define DEBUG_BUFFER_SIZE 512
+#define DEBUG_BUFFER_SIZE 1024
 #endif
 
 extern BaseSequentialStream debug_print;
