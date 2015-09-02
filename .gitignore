@@ -55,7 +55,7 @@ local.properties
 *.suo
 *.user
 *.sln.docstates
-drivers/dw1000/
+#drivers/dw1000/
 
 # Build results
 [Dd]ebug/
