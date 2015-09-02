@@ -48,6 +48,8 @@ const EXTConfig extcfg = {
 
 dw1000_driver_t dw;
 
+uint16_t counter[12];
+
 int main(void)
 {
     /*
@@ -130,7 +132,6 @@ int main(void)
 
 
     int per_loop =0;
-    uint16_t counter[12];
 
     while(1)
     {
@@ -142,9 +143,9 @@ int main(void)
             request_ranging(&dw, dst);
         }
 
+        dw1000_get_event_counters(&default_dw1000_hal, counter);
         if (per_loop == 100){
             per_loop = 0;
-            dw1000_get_event_counters(&default_dw1000_hal, counter);
             printf("    PHR_ERRORS:    %u \n\r", counter[PHR_ERRORS]);
             printf("    RSD_ERRORS:    %u \n\r", counter[RSD_ERRORS]);
             printf("    FCS_GOOD:      %u \n\r", counter[FCS_GOOD]);
