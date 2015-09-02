@@ -59,13 +59,15 @@ int main(void)
      */
     halInit();
     chSysInit();
+
     // enable interrupt
     usbstartup();
 
     //enable debug print thread
     vInitDebugPrint((BaseSequentialStream *) &SDU1);
+
     palClearPad(GPIOA, GPIOA_PIN0);
-    chThdSleepMilliseconds(25000);
+    chThdSleepMilliseconds(20000);
     palSetPad(GPIOA, GPIOA_PIN0);
     // start thread to be activated by interrupt.
     start_thd();
@@ -112,7 +114,7 @@ int main(void)
                     DW1000_EVENT_TXBERR \
                     ;
 
-    dw1000_set_interrupts(&default_dw1000_hal,zero);
+    //dw1000_set_interrupts(&default_dw1000_hal,zero);
 
     dw1000_receive(&dw);
     bool sender = false;
@@ -126,37 +128,35 @@ int main(void)
         palClearPad(GPIOC, GPIOC_PIN8);
     }
 
-    init_timex();
 
     int per_loop =0;
     uint16_t counter[12];
 
     while(1)
     {
-
         //palTogglePad(GPIOC, GPIOC_PIN8);
 
-        chThdSleepMilliseconds(1000);
+        chThdSleepMilliseconds(4000);
         uint8_t dst[2] = {0xBE,0xEF};
         if(sender){
             request_ranging(&dw, dst);
         }
 
-        if (per_loop == 10){
+        if (per_loop == 100){
             per_loop = 0;
             dw1000_get_event_counters(&default_dw1000_hal, counter);
-            printf("PHR_ERRORS: %u \n\r", counter[PHR_ERRORS]);
-            printf("RSD_ERRORS: %u \n\r", counter[RSD_ERRORS]);
-            printf("FCS_GOOD: %u \n\r", counter[FCS_GOOD]);
-            printf("FCS_ERRORS: %u \n\r", counter[FCS_ERRORS]);
-            printf("FILTER_REJECTIONS: %u \n\r", counter[FILTER_REJECTIONS]);
-            printf("RX_OVERRUNS: %u \n\r", counter[RX_OVERRUNS]);
-            printf("SFD_TIMEOUTS: %u \n\r", counter[SFD_TIMEOUTS]);
-            printf("PREAMBLE_TIMEOUTS: %u \n\r", counter[PREAMBLE_TIMEOUTS]);
-            printf("RX_TIMEOUTS: %u \n\r", counter[RX_TIMEOUTS]);
-            printf("TX_SENT: %u \n\r", counter[TX_SENT]);
-            printf("HALF_PERIOD_WARNINGS: %u \n\r", counter[HALF_PERIOD_WARNINGS]);
-            printf("TX_PWRUP_WARNINGS: %u \n\r", counter[TX_PWRUP_WARNINGS]);
+            printf("    PHR_ERRORS:    %u \n\r", counter[PHR_ERRORS]);
+            printf("    RSD_ERRORS:    %u \n\r", counter[RSD_ERRORS]);
+            printf("    FCS_GOOD:      %u \n\r", counter[FCS_GOOD]);
+            printf("    FCS_ERRORS:    %u \n\r", counter[FCS_ERRORS]);
+            printf("    FILTER_REJ:    %u \n\r", counter[FILTER_REJECTIONS]);
+            printf("    RX_OVERRUNS:   %u \n\r", counter[RX_OVERRUNS]);
+            printf("    SFD_TO:        %u \n\r", counter[SFD_TIMEOUTS]);
+            printf("    PREAMBLE_TO:   %u \n\r", counter[PREAMBLE_TIMEOUTS]);
+            printf("    RX_TIMEOUTS:   %u \n\r", counter[RX_TIMEOUTS]);
+            printf("    TX_SENT:       %u \n\r", counter[TX_SENT]);
+            printf("    HPWARN:        %u \n\r", counter[HALF_PERIOD_WARNINGS]);
+            printf("    TX_PWRUP_WARN: %u \n\r", counter[TX_PWRUP_WARNINGS]);
         }
         per_loop++;
 
