@@ -71,10 +71,11 @@ int main(void)
     palClearPad(GPIOA, GPIOA_PIN0);
     chThdSleepMilliseconds(20000);
     palSetPad(GPIOA, GPIOA_PIN0);
-    // start thread to be activated by interrupt.
-    start_thd();
     //enable interrupt
     extStart(&EXTD1, &extcfg);
+
+    // start thread to be activated by interrupt.
+    start_thd();
 
     uint8_t rxbuf[4];
     dw1000_conf_t config;

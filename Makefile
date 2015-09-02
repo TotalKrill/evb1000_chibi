@@ -265,14 +265,17 @@ include $(RULESPATH)/rules.mk
 # Start of GDB section
 #
 
-OCD_TARGET = stm32f1x.cfg
+OCD_TARGET = stm32f1x
 OCD_INTERFFACE = stlink-v2.cfg
 GDB = arm-none-eabi-gdb
 OPENOCD = openocd
-GDB_FLAGS = -ex "target remote | $(OPENOCD) -c \"gdb_port pipe; log_output openocd.log\" -f interface/$(OCD_INTERFFACE) -f target/$(OCD_TARGET)" -ex "load" -ex "monitor reset halt"
+GDB_FLAGS = -ex "target remote | $(OPENOCD) -c \"gdb_port pipe; log_output openocd.log\" -f interface/$(OCD_INTERFFACE) -f target/$(OCD_TARGET).cfg" -ex "load" -ex "monitor reset halt"
 
+RTOS_FLAGS = -ex "target remote | $(OPENOCD) -c \"gdb_port pipe; log_output openocd.log\" -f interface/$(OCD_INTERFFACE) -f target/$(OCD_TARGET).cfg" -ex "load" -ex "monitor reset halt"
 gdb: build/$(PROJECT).elf
 	$(GDB) build/$(PROJECT).elf $(GDB_FLAGS)
+rtos: build/$(PROJECT).elf
+	$(GDB) build/$(PROJECT).elf $(RTOS_FLAGS)
 
 includes:
 	@echo $(DBG_PRINT_INC)
